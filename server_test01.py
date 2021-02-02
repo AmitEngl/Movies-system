@@ -103,7 +103,7 @@ def index():
     return html
 
 
-@app.route("/predict_movie", methods=["POST"])
+@app.route("/predict_movie", methods=["GET"])
 def predict_movie():
 
     dict_for_prediction = request.args.to_dict(flat=False)
