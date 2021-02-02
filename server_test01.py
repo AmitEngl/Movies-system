@@ -148,7 +148,10 @@ def predict_movie():
             html += '<td>'
             html += title
             html += '</td>'
-        results = get_prediction(title,movies_df).values
+        # results = get_prediction(title,movies_df).values
+
+        results = ['df','dfs','34','ii9','36666']   #################
+
         html += '<td>'
         html += results[0] + ',  ' + results[1] + ',  ' + results[2] + ',  ' + results[3]+ ',  ' + results[4]
         html += '</td>'
@@ -158,7 +161,7 @@ def predict_movie():
                 </html>
                 '''
         return html
-        # return 'The prediction for ' + str(dict_for_prediction) + ' is ' + str(get_prediction(dict_for_prediction))
+
     return 'Invalid Input'
 
 def main():
