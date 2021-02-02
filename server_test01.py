@@ -44,7 +44,7 @@ def get_prediction(movie_name, movies_df):
 
     # movie_name = movie_name['Movie1'][0].strip()
 
-    movies_df = pd.read_csv('movies_data.csv')
+    # movies_df = pd.read_csv('movies_data.csv')
     titles = movies_df['title']
 
     count = CountVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0, stop_words='english')
@@ -148,12 +148,12 @@ def predict_movie():
             html += '<td>'
             html += title
             html += '</td>'
-        # results = get_prediction(title,movies_df).values
+        results = get_prediction(title,movies_df).values
 
-        results = ['df','dfs','34','ii9','36666']   #################
+        # results = ['df','dfs','34','ii9','36666']   #################
 
         html += '<td>'
-        html += results[0] + ',  ' + results[1] + ',  ' + results[2] + ',  ' + results[3]+ ',  ' + results[4]
+        html += results[0] + ', / ' + results[1] + ', / ' + results[2] + ', / ' + results[3]+ ', / ' + results[4]
         html += '</td>'
         html += '''
                 </tr></table>
