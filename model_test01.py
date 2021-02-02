@@ -99,7 +99,8 @@ def get_recommendations(title):
 
 movie_name = 'The Dark Knight'
 
-print(get_recommendations(movie_name).head(10))
+result = get_recommendations(movie_name).head(10)
+print(result)
 
 
 
