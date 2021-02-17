@@ -113,6 +113,8 @@ if start == 1:
         st.write("Getting predictions...")
         results = server_test01.get_prediction(title, md_df).values
 
+        results = results[:2]
+
         # getting the recomendation images
         get_image.main(md_df, results)
         st.write('Movies recommendations based on your watching history:')
