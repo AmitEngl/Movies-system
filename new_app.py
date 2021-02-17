@@ -111,16 +111,23 @@ if start == 1:
     pressed = mid.button('Run Model')
     if pressed:
         st.write("Getting predictions...")
+        # st.write('Movies recommendations based on your watching history:')
+
         results = server_test01.get_prediction(title, md_df).values
 
         results = results[:2]
 
         # getting the recomendation images
         get_image.main(md_df, results)
-        st.write('Movies recommendations based on your watching history:')
-        for i,title in enumerate(results):
-            # st.write(i+1,title)
-            mid.image('./posters/' + title + '.jpg', caption= str(i+1) + ') ' + title, width=200)
+        results_flag = 1
+
+        if results_flag == 1:
+            st.info("Success")
+            # st.info("Click to see results")
+
+            for i,title in enumerate(results):
+                # st.write(i+1,title)
+                st.image('./posters/' + title + '.jpg', caption= str(i+1) + ') ' + title, width=200)
 
 
 # clear posters images folder
