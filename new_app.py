@@ -1,18 +1,10 @@
 import requests
 import streamlit as st
 import pandas as pd
-import get_image
 import difflib
 import numpy as np
 from bs4 import BeautifulSoup
 
-# import server_test01
-import os
-import sys
-import shutil
-# from pyngrok import ngrok
-# public_url = ngrok.connect('8501')
-# public_url
 
 def tests():
     # success
@@ -96,6 +88,7 @@ def get_img_src(url_list):
 
     return images_src
 
+
 # loading files
 sim_matrix = np.load('cosine_sim.npz')
 sim_matrix = sim_matrix.f.arr_0
@@ -113,8 +106,14 @@ st.subheader('Choose your favorite latest movie')
 
 titles_list = []
 start = 0
+
+# c1, c2, c3, c4, c5 = st.beta_columns(5)
+
 # getting user's input
 user_input = st.text_input("Enter movie title")
+
+
+
 
 # if st.checkbox('Enter'):
 if user_input:
@@ -176,7 +175,7 @@ if start == 1:
 
 
 # clear posters images folder
-get_image.clear_folder()
+# get_image.clear_folder()
 
     # col1, col2, col3 = st.beta_columns(3)
     # with col1:

@@ -7,8 +7,7 @@ import os
 import numpy as np
 
 ########################
-# import grequests
-import conf
+
 
 def get_img_grequests(md_df, titles_list = []):
 
