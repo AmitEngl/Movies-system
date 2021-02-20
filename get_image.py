@@ -1,8 +1,77 @@
+# import grequests
 import requests
 import shutil
 import pandas as pd
 from bs4 import BeautifulSoup
 import os
+import numpy as np
+
+########################
+# import grequests
+import conf
+
+def get_img_grequests(md_df, titles_list = []):
+
+    BASE_URL = 'https://www.imdb.com/title/'
+
+    # md_df = pd.read_csv(DIR_PATH + 'movies_metadata.csv')
+    # md_df = pd.read_csv(file_path)
+
+    imdb_id_list = []
+    links_list = []
+
+    for i in range(len(titles_list)):
+        links_list.append(BASE_URL + md_df['imdb_id'][md_df['title'] == titles_list[i]].values[0])
+        # imdb_id_list.append(md_df['imdb_id'][md_df['title'] == title].values[0])
+
+    images_src = []
+
+    # getting requests with grequests for 10 urls at a time
+    rs = (grequests.get(u) for u in links_list)
+    # responses = grequests.map(rs, size=conf.logger['batch_size'])
+    responses = grequests.map(rs, size =  len(links_list))
+    index = 0
+
+    for row in responses:
+        try:
+            soup = BeautifulSoup(row.text, 'html.parser')
+            poster_div = soup.find('div', {'class': 'poster'})
+
+        except ResourceWarning as er:
+            print('error getting images')
+
+        else:
+            images = poster_div.findAll('img')
+
+            # images_src.append(images[0]['src'].split('_V1_')[0]+ '_V1_') # for bigger images
+            images_src.append(images[0]['src'])  # for small images
+
+    return images_src
+
+########################
+
+def get_img_src(md_df, titles_list = []):
+
+    BASE_URL = 'https://www.imdb.com/title/'
+
+    imdb_id_list = []
+
+    for title in titles_list:
+        imdb_id_list.append(md_df['imdb_id'][md_df['title'] == title].values[0])
+
+    images_src = []
+
+    # getting images source urls
+    for i in range(len(titles_list)):
+        page = requests.get(BASE_URL + imdb_id_list[i])
+        soup = BeautifulSoup(page.text, 'html.parser')
+        poster_div = soup.find('div', {'class': 'poster'})
+        images = poster_div.findAll('img')
+        # images_src.append(images[0]['src'].split('_V1_')[0]+ '_V1_') # for bigger images
+        images_src.append(images[0]['src']) # for small images
+
+    return images_src
+
 
 def check_folder():
     directory_path = os.getcwd()
@@ -55,7 +124,7 @@ def get_img_src_by_title(md_df, titles_list = []):
     return images_src
 
 
-def get_img_src(DIR_PATH, n_images):
+def get_img_src2(DIR_PATH, n_images):
 
     BASE_URL = 'https://www.imdb.com/title/'
 
@@ -94,13 +163,15 @@ def save_images(images_src, titles_list):
         del resp
 
 
-def main(csv_file,titles_list):
+def main(md_df,titles_list):
 
+    images_src = get_img_src_by_title(md_df, titles_list) # TODO fix
+    # images_src = get_img_grequests(md_df, titles_list)
 
-    images_src = get_img_src_by_title(csv_file, titles_list)
-
+    print(images_src)
     # images_src, titles_list = get_img_src(CSV_DIR_PATH,n_images)
     save_images(images_src, titles_list)
+
 
 if __name__ == '__main__':
 
@@ -108,7 +179,10 @@ if __name__ == '__main__':
     CSV_DIR_PATH = "C:\\Users\\liat grinberg\\Desktop\\Ohad\\ITC course\\Project 2\\Data files\\Kaggle data-small\\"
     n_images = 5
 
-    titles_list = ['Toy Story', 'Heat']
+    titles_list = ['Toy Story', 'Heat','Forrest Gump','88 Minutes']
     csv_file = 'movies_data.csv'
+    md_df = pd.read_csv(csv_file)
 
-    main(csv_file,titles_list)
+    src_list = get_img_src(md_df, titles_list)
+    print(src_list)
+    # main(md_df,titles_list)

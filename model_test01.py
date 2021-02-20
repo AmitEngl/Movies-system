@@ -1,17 +1,9 @@
 import pandas as pd
 import numpy as np
-import datetime
-import ast
-# import seaborn as sns
-from scipy import stats
 from ast import literal_eval
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.metrics.pairwise import linear_kernel, cosine_similarity
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 from nltk.stem.snowball import SnowballStemmer
-from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.corpus import wordnet
-# from surprise import Reader, Dataset, SVD, evaluate
-
 import warnings; warnings.simplefilter('ignore')
 
 def get_director(x):

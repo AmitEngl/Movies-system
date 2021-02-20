@@ -1,29 +1,18 @@
+import requests
 import streamlit as st
 import pandas as pd
 import get_image
-import server_test01
 import difflib
+import numpy as np
+from bs4 import BeautifulSoup
 
+# import server_test01
 import os
 import sys
 import shutil
 # from pyngrok import ngrok
 # public_url = ngrok.connect('8501')
 # public_url
-
-def check_input(input,df):
-    title = input.title()
-    if title not in df['title'].values:
-        return None
-    else:
-        return title
-
-# directory_path = get_image.check_folder()
-
-st.image('./movies background.jpeg')
-st.title('Movie Recommendation System')
-st.header('Welcome to our Movies system recommendation system')
-st.subheader('This is a test - Choose your favorite latest movie')
 
 def tests():
     # success
@@ -67,10 +56,61 @@ def tests():
         result = name.title()
         st.success(result)
 
+def check_input(input,df):
+    title = input.title()
+    if title not in df['title'].values:
+        return None
+    else:
+        return title
 
-# csv_file = 'cleaned_movies.csv'
-csv_file = 'movies_data.csv'
-md_df = pd.read_csv(csv_file)
+def get_recommendations(title, indices, sim_matrix,titles):
+    idx = indices.loc[title]
+    sim_scores = list(enumerate(sim_matrix[idx]))
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:31]
+    movie_indices = [i[0] for i in sim_scores]
+    return titles.iloc[movie_indices][:10]
+
+def url_from_title(titles_list):
+
+    BASE_URL = 'https://www.imdb.com/title/'
+    url_list = []
+    for title in titles_list:
+        imdb_id = md_df['imdb_id'][md_df['title'] == title].values[0]
+        url_list.append(BASE_URL + imdb_id)
+
+    return url_list
+
+def get_img_src(url_list):
+
+    images_src = []
+
+    # getting images source urls
+    for i in url_list:
+        page = requests.get(i)
+        soup = BeautifulSoup(page.text, 'html.parser')
+        poster_div = soup.find('div', {'class': 'poster'})
+        images = poster_div.findAll('img')
+        # images_src.append(images[0]['src'].split('_V1_')[0]+ '_V1_') # for bigger images
+        images_src.append(images[0]['src']) # for small images
+
+    return images_src
+
+# loading files
+sim_matrix = np.load('cosine_sim.npz')
+sim_matrix = sim_matrix.f.arr_0
+md_df = pd.read_csv('movies_data.csv')
+
+indices = pd.Series(md_df.index, index=md_df['title'])
+titles = md_df['title']
+
+# directory_path = get_image.check_folder()
+
+st.image('./movies background.jpeg')
+st.title('Movie Recommendation System')
+st.header('Welcome to our Movies system recommendation system')
+st.subheader('Choose your favorite latest movie')
+
 titles_list = []
 start = 0
 # getting user's input
@@ -97,42 +137,46 @@ if user_input:
         titles_list.append(user_input)
         start = 1
 
-# titles_list = ['Toy Story 2', 'The Lion King','Jumanji']
-
-# if st.checkbox('Start'):
 if start == 1:
     title = titles_list[0]
 
+    url_list = url_from_title(titles_list)
+    images_src = get_img_src(url_list)
+
+    for i in images_src:
+        st.image(i)
+
+############################
+    # mid.image('./posters/' + title + '.jpg')
     left_column, mid, right_column = st.beta_columns(3)
-
-    get_image.main(md_df, titles_list)
-    mid.image('./posters/' + title + '.jpg')
-
     pressed = mid.button('Run Model')
     if pressed:
         st.write("Getting predictions...")
         # st.write('Movies recommendations based on your watching history:')
 
-        results = server_test01.get_prediction(title, md_df).values
+        results = get_recommendations(title, indices, sim_matrix,titles).values
 
-        results = results[:2]
+        url_list = url_from_title(results)
+        images_src = get_img_src(url_list)
 
-        # getting the recomendation images
-        get_image.main(md_df, results)
         results_flag = 1
-
         if results_flag == 1:
             st.info("Success")
-            # st.info("Click to see results")
 
-            for i,title in enumerate(results):
-                # st.write(i+1,title)
-                st.image('./posters/' + title + '.jpg', caption= str(i+1) + ') ' + title, width=200)
+            for i,image in enumerate(images_src):
+                st.image(image, caption= str(i+1) + ') ' + results[i], width=200)
+
+            # for i,image in enumerate(images_src):
+            #     # st.write(i+1,title)
+            #     st.image(image, caption= str(i+1) + ') ' + results[i], width=200)
+
+            # for i,title in enumerate(results):
+            #     # st.write(i+1,title)
+            #     st.image('./posters/' + title + '.jpg', caption= str(i+1) + ') ' + title, width=200)
 
 
 # clear posters images folder
-# get_image.clear_folder()
-
+get_image.clear_folder()
 
     # col1, col2, col3 = st.beta_columns(3)
     # with col1:
@@ -154,44 +198,11 @@ if start == 1:
 #     image_name = i + '.jpg'
 #     st.image('./posters/' + image_name, caption=i)
 
-# Slider
-# x = st.sidebar.slider('How do like drama movies?')
-# st.write(x, 'Drama meter', x)
-
-# left_column, right_column = st.beta_columns(2)
-# pressed = left_column.button('Press me?')
-# if pressed:
-#     right_column.write("Woohoo!")
-
-# st.write("Here's our first attempt at using data to create a table:")
-# st.write(pd.DataFrame({
-#     'first column': [1, 2, 3, 4],
-#     'second column': [10, 20, 30, 40]
-# }))
 #
-# # There are other data specific functions like st.dataframe() and st.table()
+# if __name__ == '__main__':
 #
-# # Slider
-# x = st.sidebar.slider('Select a value')
-# st.write(x, 'squared is', x * x)
+#     titles_list = ['Toy Story', 'Heat', 'Forrest Gump', '88 Minutes']
+#     md_df = pd.read_csv('movies_data.csv')
 #
-# # Chart
-# chart_data = pd.DataFrame(
-#      np.random.randn(20, 3),
-#      columns=['a', 'b', 'c'])
-#
-# st.line_chart(chart_data)
-#
-# map_data = pd.DataFrame(
-#     np.random.randn(1000, 2) / [50, 50] + [32.08, 34.78],
-#     columns=['lat', 'lon'])
-#
-# st.map(map_data)
-#
-#
-
-#
-# expander = st.beta_expander("FAQ")
-# expander.write("Here you could put in some really, really long explanations...")
-
-
+#     src_list = get_img_src(md_df, titles_list)
+#     print(src_list)
