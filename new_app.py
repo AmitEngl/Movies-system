@@ -89,9 +89,7 @@ def get_img_src(url_list):
     return images_src
 
 
-
 md_df = pd.read_csv('movies_data.csv')
-
 indices = pd.Series(md_df.index, index=md_df['title'])
 titles = md_df['title']
 
@@ -152,15 +150,31 @@ if start == 1:
 
         results = get_recommendations(title, indices, sim_matrix,titles).values
 
-        url_list = url_from_title(results)
-        images_src = get_img_src(url_list)
+        # url_list = url_from_title(results)
+        # images_src = get_img_src(url_list)
 
         results_flag = 1
         if results_flag == 1:
             st.info("Success")
 
-            for i,image in enumerate(images_src):
-                st.image(image, caption= str(i+1) + ') ' + results[i], width=200)
+            st.subheader('Your recommendations:')
+            for i,movie in enumerate(results):
+                st.write(str(i+1) + ') ' + movie)
+            # for i,image in enumerate(images_src):
+            #     st.image(image, caption= str(i+1) + ') ' + results[i], width=200)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             # for i,image in enumerate(images_src):
             #     # st.write(i+1,title)
