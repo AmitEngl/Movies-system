@@ -89,9 +89,7 @@ def get_img_src(url_list):
     return images_src
 
 
-# loading files
-sim_matrix = np.load('cosine_sim.npz')
-sim_matrix = sim_matrix.f.arr_0
+
 md_df = pd.read_csv('movies_data.csv')
 
 indices = pd.Series(md_df.index, index=md_df['title'])
@@ -107,13 +105,8 @@ st.subheader('Choose your favorite latest movie')
 titles_list = []
 start = 0
 
-# c1, c2, c3, c4, c5 = st.beta_columns(5)
-
 # getting user's input
 user_input = st.text_input("Enter movie title")
-
-
-
 
 # if st.checkbox('Enter'):
 if user_input:
@@ -144,6 +137,10 @@ if start == 1:
 
     for i in images_src:
         st.image(i)
+
+    # loading files
+    sim_matrix = np.load('cosine_sim.npz')
+    sim_matrix = sim_matrix.f.arr_0
 
 ############################
     # mid.image('./posters/' + title + '.jpg')
