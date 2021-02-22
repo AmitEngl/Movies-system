@@ -106,16 +106,17 @@ def load_files():
 
 md_df, indices, titles, sim_matrix = load_files()
 
+st.title('ITC-FLIX')
 st.image('./movies background.jpeg')
 st.title('Movie Recommendation System')
 st.header('Welcome to our Movies system recommendation system')
 st.subheader('Choose your latest favorite movies')
+st.sidebar.header('My Favorite Movies:')
 
 titles_list = []
 start = 0
 
 variables = st.multiselect("Enter movie title", md_df['title'])
-
 
 left_column, mid, right_column = st.beta_columns(3)
 
@@ -124,6 +125,67 @@ with mid:
     if enter:
         titles_list = variables
         start = 1
+
+
+if start == 1:
+    url_list = url_from_title(titles_list)
+    images_src = get_img_src(url_list)
+
+    for i, movie in enumerate(titles_list):
+        st.sidebar.write(str(i + 1) + ') ' + movie)
+        st.sidebar.image(images_src[i], width=150)
+        start = 2
+
+# left_column, mid, right_column = st.beta_columns(3)
+
+if start == 2:
+
+    st.write("Getting predictions...")
+    title = titles_list[0]
+    results = []
+
+    # for title in titles_list:
+    results = get_recommendations(title, indices, sim_matrix,titles).values
+
+    url_list = url_from_title(results)
+    images_src = get_img_src(url_list)
+
+    st.balloons()
+    with mid:
+        st.info('Success')
+        st.subheader('Your recommendations:')
+
+        for i,movie in enumerate(results):
+            st.write(str(i+1) + ') ' + movie)
+            st.image(images_src[i], width=200)
+            # st.image(images_src[i], caption=str(i + 1) + ') ' + results[i], width=200)
+
+
+
+# clear posters images folder
+# get_image.clear_folder()
+
+    # col1, col2, col3 = st.beta_columns(3)
+    # with col1:
+    #     st.header(titles_list[0])
+    #     st.image('./posters/' +  titles_list[0] + '.jpg', use_column_width=True)
+    #
+    # with col2:
+    #     st.header(titles_list[1])
+    #     st.image('./posters/' +  titles_list[1] + '.jpg', use_column_width=True)
+    #
+    # with col3:
+    #     st.header(titles_list[2])
+    #     st.image('./posters/' +  titles_list[2] + '.jpg', use_column_width=True)
+
+#
+# if __name__ == '__main__':
+#
+#     titles_list = ['Toy Story', 'Heat', 'Forrest Gump', '88 Minutes']
+#     md_df = pd.read_csv('movies_data.csv')
+#
+#     src_list = get_img_src(md_df, titles_list)
+#     print(src_list)
 
 #####################################
 
@@ -149,80 +211,3 @@ with mid:
 #         st.success(user_input)
 #         titles_list.append(user_input)
 #         start = 1
-
-if start == 1:
-
-    # left_column, mid, right_column = st.beta_columns(3)
-    with mid:
-        url_list = url_from_title(titles_list)
-        images_src = get_img_src(url_list)
-
-        for i in images_src:
-            if i:
-                st.image(i)
-
-        start = 2
-
-    # left_column, mid, right_column = st.beta_columns(3)
-
-if start == 2:
-    # with mid:
-    #     run_model = mid.button('Run Model')
-    #
-    # if run_model:
-        # st.write("titles_list",titles_list)
-    st.write("Getting predictions...")
-    title = titles_list[0]
-    results = []
-    # for title in titles_list:
-    results = get_recommendations(title, indices, sim_matrix,titles).values
-
-    st.write(results)
-    url_list = url_from_title(results)
-    images_src = get_img_src(url_list)
-
-        # results_flag = 1
-        # if results_flag == 1:
-        #     st.info("Success")
-        #     st.balloons()
-        #
-        #     st.subheader('Your recommendations:')
-        #     with mid:
-        #         for i,movie in enumerate(results):
-        #             st.write(str(i+1) + ') ' + movie)
-                    # st.image(images_src[i], caption=str(i + 1) + ') ' + results[i], width=200)
-
-            # for i,image in enumerate(images_src):
-            #     st.image(image, caption= str(i+1) + ') ' + results[i], width=200)
-
-# clear posters images folder
-# get_image.clear_folder()
-
-    # col1, col2, col3 = st.beta_columns(3)
-    # with col1:
-    #     st.header(titles_list[0])
-    #     st.image('./posters/' +  titles_list[0] + '.jpg', use_column_width=True)
-    #
-    # with col2:
-    #     st.header(titles_list[1])
-    #     st.image('./posters/' +  titles_list[1] + '.jpg', use_column_width=True)
-    #
-    # with col3:
-    #     st.header(titles_list[2])
-    #     st.image('./posters/' +  titles_list[2] + '.jpg', use_column_width=True)
-    #
-    # option = st.selectbox('Which movie do like best?',titles_list)
-
-
-# for i in titles_list:
-#     image_name = i + '.jpg'
-#     st.image('./posters/' + image_name, caption=i)
-
-#
-# if __name__ == '__main__':
-#
-#     titles_list = ['Toy Story', 'Heat', 'Forrest Gump', '88 Minutes']
-#     md_df = pd.read_csv('movies_data.csv')
-#
-#     src_list = get_img_src(md_df, titles_list)
-#     print(src_list)
