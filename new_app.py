@@ -79,111 +79,121 @@ def get_img_src(url_list):
 
     # getting images source urls
     for i in url_list:
-        page = requests.get(i)
-        soup = BeautifulSoup(page.text, 'html.parser')
-        poster_div = soup.find('div', {'class': 'poster'})
-        images = poster_div.findAll('img')
-        # images_src.append(images[0]['src'].split('_V1_')[0]+ '_V1_') # for bigger images
-        images_src.append(images[0]['src']) # for small images
+
+        try:
+            page = requests.get(i)
+            soup = BeautifulSoup(page.text, 'html.parser')
+            poster_div = soup.find('div', {'class': 'poster'})
+            images = poster_div.findAll('img')
+        except:
+            print('Error parsing the movie title page from url: {} '.format(i))
+            images_src.append(None)
+        else:
+            # images_src.append(images[0]['src'].split('_V1_')[0]+ '_V1_') # for bigger images
+            images_src.append(images[0]['src'])  # for small images
 
     return images_src
 
+@st.cache
+def load_files():
+    md_df = pd.read_csv('movies_data.csv')
+    indices = pd.Series(md_df.index, index=md_df['title'])
+    titles = md_df['title']
+    sim_matrix = np.load('cosine_sim.npz')
+    sim_matrix = sim_matrix.f.arr_0
 
-md_df = pd.read_csv('movies_data.csv')
-indices = pd.Series(md_df.index, index=md_df['title'])
-titles = md_df['title']
+    return md_df, indices, titles, sim_matrix
 
-# directory_path = get_image.check_folder()
+md_df, indices, titles, sim_matrix = load_files()
 
 st.image('./movies background.jpeg')
 st.title('Movie Recommendation System')
 st.header('Welcome to our Movies system recommendation system')
-st.subheader('Choose your favorite latest movie')
+st.subheader('Choose your latest favorite movies')
 
 titles_list = []
 start = 0
 
-# getting user's input
-user_input = st.text_input("Enter movie title")
+variables = st.multiselect("Enter movie title", md_df['title'])
 
-# if st.checkbox('Enter'):
-if user_input:
-    user_input_check = check_input(user_input,md_df)
-    # st.write('user_input_check',user_input_check)
 
-    if not user_input_check:
-        st.error('Movie title not found')
-        st.write('Please retry or click below to check for similar movie titles')
+left_column, mid, right_column = st.beta_columns(3)
 
-        if st.checkbox('Find similar titles'):
-            sim_titles = difflib.get_close_matches(user_input, md_df["title"].values)
-            if sim_titles:
-                for i in sim_titles:
-                    st.write(i)
-
-    else:
-        user_input = user_input_check
-        st.success(user_input)
-        titles_list.append(user_input)
+with mid:
+    enter = mid.button('Enter')
+    if enter:
+        titles_list = variables
         start = 1
 
-if start == 1:
-    title = titles_list[0]
+#####################################
 
-    url_list = url_from_title(titles_list)
+# getting user's input
+# user_input = st.text_input("Enter movie title")
+#
+# if user_input:
+#     user_input_check = check_input(user_input,md_df)
+#     # st.write('user_input_check',user_input_check)
+#
+#     if not user_input_check:
+#         st.error('Movie title not found')
+#         st.write('Please retry or click below to check for similar movie titles')
+#
+#         if st.checkbox('Find similar titles'):
+#             sim_titles = difflib.get_close_matches(user_input, md_df["title"].values)
+#             if sim_titles:
+#                 for i in sim_titles:
+#                     st.write(i)
+#
+#     else:
+#         user_input = user_input_check
+#         st.success(user_input)
+#         titles_list.append(user_input)
+#         start = 1
+
+if start == 1:
+
+    # left_column, mid, right_column = st.beta_columns(3)
+    with mid:
+        url_list = url_from_title(titles_list)
+        images_src = get_img_src(url_list)
+
+        for i in images_src:
+            if i:
+                st.image(i)
+
+        start = 2
+
+    # left_column, mid, right_column = st.beta_columns(3)
+
+if start == 2:
+    # with mid:
+    #     run_model = mid.button('Run Model')
+    #
+    # if run_model:
+        # st.write("titles_list",titles_list)
+    st.write("Getting predictions...")
+    title = titles_list[0]
+    results = []
+    # for title in titles_list:
+    results = get_recommendations(title, indices, sim_matrix,titles).values
+
+    st.write(results)
+    url_list = url_from_title(results)
     images_src = get_img_src(url_list)
 
-    for i in images_src:
-        st.image(i)
-
-    # loading files
-    sim_matrix = np.load('cosine_sim.npz')
-    sim_matrix = sim_matrix.f.arr_0
-
-############################
-    # mid.image('./posters/' + title + '.jpg')
-    left_column, mid, right_column = st.beta_columns(3)
-    pressed = mid.button('Run Model')
-    if pressed:
-        st.write("Getting predictions...")
-        # st.write('Movies recommendations based on your watching history:')
-
-        results = get_recommendations(title, indices, sim_matrix,titles).values
-
-        # url_list = url_from_title(results)
-        # images_src = get_img_src(url_list)
-
-        results_flag = 1
-        if results_flag == 1:
-            st.info("Success")
-
-            st.subheader('Your recommendations:')
-            for i,movie in enumerate(results):
-                st.write(str(i+1) + ') ' + movie)
-            # for i,image in enumerate(images_src):
-            #     st.image(image, caption= str(i+1) + ') ' + results[i], width=200)
-
-
-
-
-
-
-
-
-
-
-
-
-
+        # results_flag = 1
+        # if results_flag == 1:
+        #     st.info("Success")
+        #     st.balloons()
+        #
+        #     st.subheader('Your recommendations:')
+        #     with mid:
+        #         for i,movie in enumerate(results):
+        #             st.write(str(i+1) + ') ' + movie)
+                    # st.image(images_src[i], caption=str(i + 1) + ') ' + results[i], width=200)
 
             # for i,image in enumerate(images_src):
-            #     # st.write(i+1,title)
             #     st.image(image, caption= str(i+1) + ') ' + results[i], width=200)
-
-            # for i,title in enumerate(results):
-            #     # st.write(i+1,title)
-            #     st.image('./posters/' + title + '.jpg', caption= str(i+1) + ') ' + title, width=200)
-
 
 # clear posters images folder
 # get_image.clear_folder()
