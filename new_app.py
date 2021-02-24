@@ -1,69 +1,40 @@
 import requests
 import streamlit as st
 import pandas as pd
-import difflib
 import numpy as np
 from bs4 import BeautifulSoup
+import time
 
 
-def tests():
-    # success
-    st.success("Success")
-    st.info("Information")
-    st.warning("Warning")
-    st.error("Error")
-
-    # Selection box
-
-    # first argument takes the titleof the selectionbox
-    # second argument takes options
-    hobby = st.selectbox("Hobbies: ",
-                         ['Dancing', 'Reading', 'Sports'])
-
-    # print the selected hobby
-    st.write("Your hobby is: ", hobby)
-
-    # multi select box
-
-    # first argument takes the box title
-    # second argument takes the options to show
-    hobbies = st.multiselect("Hobbies: ",
-                             ['Dancing', 'Reading', 'Sports'])
-
-    # write the selected options
-    st.write("You selected", len(hobbies), 'hobbies')
-
-    # Create a simple button that does nothing
-    st.button("Click me for no reason")
-
-    # Create a button, that when clicked, shows a text
-    if (st.button("About")):
-        st.text("Welcome To GeeksForGeeks!!!")
-
-    name = st.text_input("Enter Your name", "Type Here ...")
-
-    # display the name when the submit button is clicked
-    # .title() is used to get the input text string
-    if (st.button('Submit')):
-        result = name.title()
-        st.success(result)
-
-def check_input(input,df):
-    title = input.title()
-    if title not in df['title'].values:
-        return None
-    else:
-        return title
-
+@st.cache
 def get_recommendations(title, indices, sim_matrix,titles):
+    '''
+    :param title: movie title
+    :param indices: indices list
+    :param sim_matrix: similarity matrix
+    :param titles: titles list of all movies
+    :return: reccomandation list of 10 movies and their sim scores
+    '''
+
     idx = indices.loc[title]
     sim_scores = list(enumerate(sim_matrix[idx]))
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-    sim_scores = sim_scores[1:31]
+    sim_scores = sim_scores[1:21]
     movie_indices = [i[0] for i in sim_scores]
-    return titles.iloc[movie_indices][:10]
+    scores = [i[1] for i in sim_scores][:10]
+    output = titles.iloc[movie_indices][:10]
 
+    df = pd.DataFrame(output)
+    df['score'] = scores
+
+    return df
+
+@st.cache
 def url_from_title(titles_list):
+    '''
+    :param titles_list: a list of movie titles
+    :return: a list of the movies IMDB urls
+    '''
 
     BASE_URL = 'https://www.imdb.com/title/'
     url_list = []
@@ -73,7 +44,12 @@ def url_from_title(titles_list):
 
     return url_list
 
+@st.cache
 def get_img_src(url_list):
+    '''
+    gets a list of "IMDB" urls and scrapes for the movie poster image source
+    :return: a list of urls of the images
+    '''
 
     images_src = []
 
@@ -96,6 +72,10 @@ def get_img_src(url_list):
 
 @st.cache
 def load_files():
+    '''
+    loads the required files
+    :return: md_df, indices, titles, sim_matrix
+    '''
     md_df = pd.read_csv('movies_data.csv')
     indices = pd.Series(md_df.index, index=md_df['title'])
     titles = md_df['title']
@@ -104,14 +84,47 @@ def load_files():
 
     return md_df, indices, titles, sim_matrix
 
+# @st.cache
+def merge_results(result_df_final, titles_list):
+    '''
+    merge results, clean duplications, gruops and sort final df
+    :return: final df result after processing
+    '''
+    for title in titles_list:
+        if title in result_df_final['title'].tolist():
+            index = result_df_final[result_df_final['title'] == title].index
+            # Delete these row indexes from dataFrame
+            result_df_final.drop(index, inplace=True)
+
+    result_df_final = result_df_final.groupby(['title']).sum()
+    result_df_final.sort_values(['score'], ascending=False, inplace=True)
+
+    return result_df_final
+
 md_df, indices, titles, sim_matrix = load_files()
 
-st.title('ITC-FLIX')
-st.image('./movies background.jpeg')
-st.title('Movie Recommendation System')
-st.header('Welcome to our Movies system recommendation system')
+st.image('./itcflix.jpg', use_column_width=True)
+
+# st.title('    Movie Recommendation System')
+st.image('./movies background.jpeg', use_column_width=True)
+st.header('Welcome to our movies recommendation system')
 st.subheader('Choose your latest favorite movies')
-st.sidebar.header('My Favorite Movies:')
+# st.markdown('Streamlit is **_really_ cool**.')
+
+# sidebar content
+with st.sidebar.beta_expander("About"):
+    st.text("This project is made by:\n"
+                "Ohad Hayoun\nLoren Dery\nAmit Engelstein\nAlex Zabbal\nOr Granot\n\n")
+    st.image('./main3.jpg', use_column_width=True)
+
+with st.sidebar.beta_expander("Info"):
+    st.write("Our Movie recommendation system\n"
+                    "is based on an Hybrid model of\n"
+                    "a Content Based Filtering model and \n"
+                    "a Collaborative Filtering model")
+    st.image('./main2.jpg', use_column_width=True)
+
+st.sidebar.subheader('Your favorite movies:')
 
 titles_list = []
 start = 0
@@ -119,13 +132,11 @@ start = 0
 variables = st.multiselect("Enter movie title", md_df['title'])
 
 left_column, mid, right_column = st.beta_columns(3)
-
 with mid:
     enter = mid.button('Enter')
     if enter:
         titles_list = variables
         start = 1
-
 
 if start == 1:
     url_list = url_from_title(titles_list)
@@ -136,78 +147,56 @@ if start == 1:
         st.sidebar.image(images_src[i], width=150)
         start = 2
 
-# left_column, mid, right_column = st.beta_columns(3)
-
 if start == 2:
-
     st.write("Getting predictions...")
+
+    # progress bar
+    my_bar = st.progress(0)
+    for percent_complete in range(100):
+        time.sleep(0.03)
+        my_bar.progress(percent_complete + 1)
+
+    st.info('Success')
     title = titles_list[0]
-    results = []
+    result_df_final = pd.DataFrame()
 
-    # for title in titles_list:
-    results = get_recommendations(title, indices, sim_matrix,titles).values
+    # getting recommendations
+    c1, c2 = st.beta_columns([3,1])
+    with c1:
+        for title in titles_list:
+            result_df = get_recommendations(title, indices, sim_matrix,titles)
+            result_df_final = pd.concat([result_df_final, result_df])
 
-    url_list = url_from_title(results)
+        result_df_final = merge_results(result_df_final,titles_list)
+        result_df_final.reset_index(level=None, drop=False, inplace=True, col_level=0, col_fill='')
+
+        for i,movie in enumerate(result_df_final['title'].iloc[:10]):
+            st.write(str(i + 1) + ') ' + movie)
+            time.sleep(0.4)
+
+        with st.beta_expander("Check complete table with scores"):
+            st.table(result_df_final)
+
+    # getting top 10 results
+    result = result_df_final['title'].iloc[:10]
+
+    # getting images
+    url_list = url_from_title(result)
     images_src = get_img_src(url_list)
 
-    st.balloons()
-    with mid:
-        st.info('Success')
-        st.subheader('Your recommendations:')
-
-        for i,movie in enumerate(results):
+    # presenting results
+    with c2:
+        for i,movie in enumerate(result):
             st.write(str(i+1) + ') ' + movie)
             st.image(images_src[i], width=200)
-            # st.image(images_src[i], caption=str(i + 1) + ') ' + results[i], width=200)
+            # st.image(images_src[i], caption=str(i + 1) + ') ' + result[i], width=200)
+
+    start = 0
 
 
-
-# clear posters images folder
-# get_image.clear_folder()
-
-    # col1, col2, col3 = st.beta_columns(3)
-    # with col1:
-    #     st.header(titles_list[0])
-    #     st.image('./posters/' +  titles_list[0] + '.jpg', use_column_width=True)
-    #
-    # with col2:
-    #     st.header(titles_list[1])
-    #     st.image('./posters/' +  titles_list[1] + '.jpg', use_column_width=True)
-    #
-    # with col3:
-    #     st.header(titles_list[2])
-    #     st.image('./posters/' +  titles_list[2] + '.jpg', use_column_width=True)
-
-#
 # if __name__ == '__main__':
+#     md_df, indices, titles, sim_matrix = load_files()
+#     title = 'Toy Story'
+#     result_df = get_recommendations(title, indices, sim_matrix, titles)
 #
-#     titles_list = ['Toy Story', 'Heat', 'Forrest Gump', '88 Minutes']
-#     md_df = pd.read_csv('movies_data.csv')
-#
-#     src_list = get_img_src(md_df, titles_list)
-#     print(src_list)
-
-#####################################
-
-# getting user's input
-# user_input = st.text_input("Enter movie title")
-#
-# if user_input:
-#     user_input_check = check_input(user_input,md_df)
-#     # st.write('user_input_check',user_input_check)
-#
-#     if not user_input_check:
-#         st.error('Movie title not found')
-#         st.write('Please retry or click below to check for similar movie titles')
-#
-#         if st.checkbox('Find similar titles'):
-#             sim_titles = difflib.get_close_matches(user_input, md_df["title"].values)
-#             if sim_titles:
-#                 for i in sim_titles:
-#                     st.write(i)
-#
-#     else:
-#         user_input = user_input_check
-#         st.success(user_input)
-#         titles_list.append(user_input)
-#         start = 1
+#     print(result_df)
