@@ -16,14 +16,21 @@ def get_recommendations(title, indices, sim_matrix,titles):
     '''
 
     idx = indices.loc[title]
+    if not isinstance(idx, (int, np.integer)):
+        if len(idx) > 1:
+            idx = idx[0]
+
     sim_scores = list(enumerate(sim_matrix[idx]))
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
     sim_scores = sim_scores[1:21]
     movie_indices = [i[0] for i in sim_scores]
     scores = [i[1] for i in sim_scores][:10]
-    output = titles.iloc[movie_indices][:10]
+    output = titles.iloc[movie_indices]
 
-    df = pd.DataFrame(output)
+    output = np.unique(output)[:10]
+
+    df = pd.DataFrame(output,columns=['title'])
+
     df['score'] = scores
 
     return df
@@ -195,7 +202,19 @@ if start == 2:
 
 # if __name__ == '__main__':
 #     md_df, indices, titles, sim_matrix = load_files()
-#     title = 'Toy Story'
-#     result_df = get_recommendations(title, indices, sim_matrix, titles)
+#     # title = 'The Dictator'
+#     title = 'Beauty and the Beast'
+#     titles_list = ['Ted']
+#     result_df_final = pd.DataFrame()
+#     # 'The Beatles: Eight Days a Week - The Touring Years', 'Electric Dreams', 'RoboCop', 'Ted'
 #
+#     result_df = get_recommendations(title, indices, sim_matrix, titles)
 #     print(result_df)
+#
+#     result_df_final = pd.concat([result_df_final, result_df])
+#
+#     result_df_final = merge_results(result_df_final, titles_list)
+#     result_df_final.reset_index(level=None, drop=False, inplace=True, col_level=0, col_fill='')
+#
+#
+#     print(result_df_final)
