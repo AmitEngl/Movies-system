@@ -5,7 +5,6 @@ import numpy as np
 from bs4 import BeautifulSoup
 import time
 
-
 @st.cache
 def get_recommendations(title, indices, sim_matrix,titles):
     '''
@@ -103,7 +102,7 @@ def merge_results(result_df_final, titles_list):
 
 md_df, indices, titles, sim_matrix = load_files()
 
-st.image('./itcflix.jpg', use_column_width=True)
+st.image('./itcflix.JPG', use_column_width=True)
 
 # st.title('    Movie Recommendation System')
 st.image('./movies background.jpeg', use_column_width=True)
@@ -115,14 +114,14 @@ st.subheader('Choose your latest favorite movies')
 with st.sidebar.beta_expander("About"):
     st.text("This project is made by:\n"
                 "Ohad Hayoun\nLoren Dery\nAmit Engelstein\nAlex Zabbal\nOr Granot\n\n")
-    st.image('./main3.jpg', use_column_width=True)
+    # st.image('./main3.jpg', use_column_width=True)
 
 with st.sidebar.beta_expander("Info"):
     st.write("Our Movie recommendation system\n"
                     "is based on an Hybrid model of\n"
                     "a Content Based Filtering model and \n"
                     "a Collaborative Filtering model")
-    st.image('./main2.jpg', use_column_width=True)
+    # st.image('./main2.jpg', use_column_width=True)
 
 st.sidebar.subheader('Your favorite movies:')
 
